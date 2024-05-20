@@ -1,89 +1,92 @@
 import pandas as pd
-import xgboost
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from imblearn.over_sampling import SMOTENC
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
-from sklearn.pipeline import Pipeline
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import StackingClassifier
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
+import xgboost as xgb
+import numpy as np
+from sklearn.preprocessing import OrdinalEncoder
 
+# Load data from CSV file
 try:
-  # Load data from CSV file (replace with your file path)
-  data = pd.read_csv("Loan_default.csv")
-
+    data = pd.read_csv("Loan_default.csv")
 except FileNotFoundError:
-  print("Error: File 'Loan_default.csv' not found. Please ensure the file exists in the same directory as your script.")
-  exit()
+    print("Error: File 'Loan_default.csv' not found. Please ensure the file exists in the same directory as your script.")
+    exit()
 
 # Separate features and target variable
 features = data.drop(["Default", "LoanID"], axis=1)
 target = data["Default"]
 
 # Define categorical features explicitly
-categorical_features = [
-  "Education",
-  "EmploymentType",
-  "MaritalStatus",
-  "HasMortgage",
-  "HasDependents",
-  "LoanPurpose",
-  "HasCoSigner",
-]
-# Get the indices of the existing categorical features
-cat_features_indices = [data.columns.get_loc(col)-1 for col in categorical_features if col in data.columns]
-# Handle categorical features
-for col in categorical_features:
-  if col in data.columns:
-    try:
-      features[col] = features[col].astype("category")
-    except (KeyError, ValueError) as e:
-      print(f"Error converting '{col}' to categorical data type: {e}")
+categorical_features = ["Education", "EmploymentType", "MaritalStatus", "HasMortgage", "HasDependents", "LoanPurpose", "HasCoSigner"]
+cat_features_indices = [features.columns.get_loc(col) for col in categorical_features]
 
-# Calculate class imbalance ratio
-class_counts = target.value_counts()
-class_imbalance_ratio = class_counts.iloc[1] / class_counts.iloc[0]
-print(f"Class imbalance ratio: {class_imbalance_ratio:.2f}")
+# Convert categorical features using OrdinalEncoder
+encoder = OrdinalEncoder()
+features[categorical_features] = encoder.fit_transform(features[categorical_features])
 
-# Oversampling (recommended for this case)
-smote = SMOTENC(categorical_features, random_state=42)
-X_train, y_train = smote.fit_resample(features, target)
+# Convert encoded features to integer type
+features[categorical_features] = features[categorical_features].astype(int)
 
-# Split data into training and validation sets
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42, stratify=target)
 
-categorical_transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
-numerical_transformer = 'passthrough'
-transformer = ColumnTransformer(transformers=[
-    ('cat', categorical_transformer, categorical_features),
-    ('num', numerical_transformer, [col for col in data.columns if col not in categorical_features])
-])
+# Apply SMOTENC to the training data
+smote = SMOTENC(categorical_features=cat_features_indices, random_state=42)
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
 
-# Define base models and parameters
+# Define base models
 base_models = [
-  ('catboost', CatBoostClassifier(learning_rate=0.1, iterations=1000, random_seed=42, eval_metric='AUC', cat_features=cat_features_indices)),
- ('lightgbm', LGBMClassifier(objective='binary', learning_rate=0.1, n_estimators=100, random_state=42)),
+    ('catboost', CatBoostClassifier(objective= "Logloss",learning_rate=0.1, iterations=100, random_seed=42, eval_metric='AUC', cat_features=categorical_features)),
+    ('lightgbm', LGBMClassifier(objective='binary', learning_rate=0.1, n_estimators=100, random_state=42, categorical_feature=cat_features_indices)),
 ]
 
-# Define the final stacking classifier (meta-learner)
-final_estimator = xgboost.XGBClassifier(objective='binary:logistic', learning_rate=0.1, n_estimators=1000, random_state=42)
+# Define the final stacking classifier (meta-learner) with XGBoost
+final_estimator = xgb.XGBClassifier(objective='binary:logistic', learning_rate=0.1, n_estimators=100, random_state=42, 
+                                    enable_categorical=True, 
+                                    tree_method='hist')
 
+# Create the Stacking Classifier
 stacking_ensemble = StackingClassifier(estimators=base_models, final_estimator=final_estimator, passthrough=True)
-stacking_ensemble.fit(X_train, y_train)
 
+# Nested cross-validation setup
+skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
+
+# Train and evaluate the stacking ensemble with nested CV
+for train_index, val_index in skf.split(X_train_resampled, y_train_resampled):
+    X_train_inner, X_val_inner = X_train_resampled.iloc[train_index], X_train_resampled.iloc[val_index]
+    y_train_inner, y_val_inner = y_train_resampled.iloc[train_index], y_train_resampled.iloc[val_index]
+
+    # Fit the stacking ensemble on the inner fold
+    stacking_ensemble.fit(X_train_inner, y_train_inner)
+    inner_preds = stacking_ensemble.predict_proba(X_val_inner)[:, 1]
+
+    # Evaluate the model on the inner validation fold
+    inner_accuracy = accuracy_score(y_val_inner, inner_preds > 0.5)
+    inner_f1 = f1_score(y_val_inner, inner_preds > 0.5)
+    inner_auc = roc_auc_score(y_val_inner, inner_preds)
+
+    print(f"Inner Fold Performance: Accuracy: {inner_accuracy:.4f}, F1 Score: {inner_f1:.4f}, AUC-ROC: {inner_auc:.4f}")
+
+
+# Evaluate the model on the outer test set
+stacking_ensemble.fit(X_train_resampled, y_train_resampled)
+# test_preds = stacking_ensemble.predict_proba(X_test)[:, 1]
 
 # Make predictions on the validation set
-predictions = stacking_ensemble.predict(X_val)
+try:
+    predictions = stacking_ensemble.predict(X_test)
+except Exception as e:
+    print(f"Error during prediction: {e}")
 
-# Evaluate model performance
-accuracy = accuracy_score(y_val, predictions)
-f1 = f1_score(y_val, predictions)
-auc = roc_auc_score(y_val, predictions)
+accuracy = accuracy_score(y_test, predictions)
+f1 = f1_score(y_test, predictions)
+auc = roc_auc_score(y_test, predictions)
 
+print("Testing Set Performance:")
 print(f"Accuracy: {accuracy:.4f}")
 print(f"F1 Score: {f1:.4f}")
-print(f"AUC: {auc:.4f}")
-
-print("Model training and evaluation complete!")
+print(f"AUC-ROC: {auc:.4f}")

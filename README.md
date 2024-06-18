@@ -8,6 +8,7 @@
   * ExtraTrees Algorithm
   * Decision Trees Algorithm
   * Random Forest Algorithm
+  * ANN
 
 ## Results
 
@@ -18,3 +19,4 @@
 | ExtraTrees     | 0.8261          | 0.8280    | 0.8261  |
 | Decision Trees | 0.6882          | 0.6986    | 0.6882  |
 | Random Forest  | 0.7354          | 0.7433    | 0.7354  |
+| ANN            | 0.7002          | 0.6868    | 0.7727  |

@@ -10,6 +10,18 @@
   * Random Forest Algorithm
   * ANN
 
+## Significance of Categorical features (Chi-Squared test)
+| Variable       | Chi-Squared |
+|----------------|-------------|
+| EmploymentType | 529.7449    |
+| HasCoSigner    | 390.3050    |
+| HasDependents  | 306.8506    |
+| Education      | 214.0190    |
+| MaritalStatus  | 200.3611    |
+| HasMortgage    | 133.2520    |
+| LoanPurpose    | 127.9342    |
+
+
 ## Results
 
 | Algorithms     | Accuracy        | F1 Score  | AUC     |

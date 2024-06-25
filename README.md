@@ -53,4 +53,15 @@
 | Random Forest  | 0.7243          | 0.7309    | 0.7243  |
 | ANN            | 0.6401          | 0.6010    | 0.6373  |
 
+## Results after feature reduction (LoanPurpose,HasMortgage,MaritalStatus)
+
+| Algorithms     | Accuracy        | F1 Score  | AUC     |
+| -------------  |:-------------:  | -----:    | ----:   |
+| LightGBM       | 0.8852          | 0.8776    | 0.8852  |
+| CatBoost       | 0.9313          | 0.9269    | 0.9313  |
+| ExtraTrees     | 0.8305          | 0.8325    | 0.8305  |
+| Decision Trees | 0.6882          | 0.6986    | 0.6882  |
+| Random Forest  | 0.7243          | 0.7397    | 0.7335  |
+| ANN            | 0.6115          | 0.5896    | 0.6011  |
+
 

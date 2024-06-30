@@ -22,6 +22,7 @@
 | Random Forest  | 0.7354          | 0.7433    | 0.7354  |
 | ANN            | 0.7002          | 0.6868    | 0.7727  |
 | Neural Network | 0.7061          | 0.7421    | 0.7369  |
+| Stacking Ens.  | 0.9468          | 0.9451    | 0.9512  |
 
 ## Significance of Categorical features (Chi-Squared test)
 | Variable       | Chi-Squared |

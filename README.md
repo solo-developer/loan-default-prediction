@@ -35,6 +35,20 @@
 | HasMortgage    | 133.2520    |
 | LoanPurpose    | 127.9342    |
 
+## Significance of Numerical features (Correlation test)
+| Feature         | Correlation |
+|-----------------|-------------|
+| InterestRate    | 0.131273    |
+| LoanAmount      | 0.086659    |
+| NumCreditLines  | 0.028330    |
+| DTIRatio        | 0.019236    |
+| LoanTerm        | 0.000545    |
+| CreditScore     | -0.034166   |
+| MonthsEmployed  | -0.097374   |
+| Income          | -0.099119   |
+| Age             | -0.167783   |
+
+
 ## Results after feature reduction (LoanPurpose)
 
 | Algorithms     | Accuracy        | F1 Score  | AUC     |

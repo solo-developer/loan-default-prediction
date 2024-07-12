@@ -24,6 +24,9 @@
 | Neural Network | 0.7061          | 0.7421    | 0.7369  |
 | Stacking Ens.  | 0.9468          | 0.9451    | 0.9512  |
 
+## F1-Score Bar Graph Visualization
+![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/main/images/bargraph-f1.png)
+
 ## Significance of Categorical features (Chi-Squared test)
 | Variable       | Chi-Squared |
 |----------------|-------------|

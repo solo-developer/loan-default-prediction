@@ -27,6 +27,9 @@
 ## F1-Score Bar Graph Visualization
 ![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/main/images/bargraph-f1.png)
 
+## ROC-AUC Comparison
+![ROC-AUC Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/ROC-AUC-Comparison.png)
+
 ## Significance of Categorical features (Chi-Squared test)
 ![Chi-Squared test Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/chi-squared.png)
 

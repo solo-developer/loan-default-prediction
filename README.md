@@ -28,28 +28,10 @@
 ![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/main/images/bargraph-f1.png)
 
 ## Significance of Categorical features (Chi-Squared test)
-| Variable       | Chi-Squared |
-|----------------|-------------|
-| EmploymentType | 529.7449    |
-| HasCoSigner    | 390.3050    |
-| HasDependents  | 306.8506    |
-| Education      | 214.0190    |
-| MaritalStatus  | 200.3611    |
-| HasMortgage    | 133.2520    |
-| LoanPurpose    | 127.9342    |
+![Chi-Squared test Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/chi-squared.png)
 
 ## Significance of Numerical features (Correlation test)
-| Feature         | Correlation |
-|-----------------|-------------|
-| InterestRate    | 0.131273    |
-| LoanAmount      | 0.086659    |
-| NumCreditLines  | 0.028330    |
-| DTIRatio        | 0.019236    |
-| LoanTerm        | 0.000545    |
-| CreditScore     | -0.034166   |
-| MonthsEmployed  | -0.097374   |
-| Income          | -0.099119   |
-| Age             | -0.167783   |
+![Correlation test Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/correlation.png)
 
 
 ## Results after feature reduction (LoanPurpose)

@@ -98,4 +98,22 @@ try:
 except Exception as e:
     print(f"Error during AUC-ROC curve plotting: {e}")
 
+# Save metrics and parameters to Excel file
+try:
+    results = pd.DataFrame({
+        'Model': ['XGBClassifier'],
+        'Accuracy': [accuracy],
+        'F1 Score': [f1],
+        'AUC': [auc],
+        'Training Time (s)': [training_time],
+        'Testing Time (s)': [testing_time]
+    })
+
+    with pd.ExcelWriter('XGBClassifier.xlsx', mode='w') as writer:
+        results.to_excel(writer, sheet_name='Metrics', index=False)
+        pd.DataFrame({'FPR': fpr, 'TPR': tpr}).to_excel(writer, sheet_name='ROC', index=False)
+
+except Exception as e:
+    print(f"Error during data saving: {e}")
+
 print("Model training and evaluation complete!")

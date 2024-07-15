@@ -9,13 +9,12 @@ import matplotlib.pyplot as plt
 try:
     # Load data from CSV file (replace with your file path)
     data = pd.read_csv("Loan_default.csv")
-
 except FileNotFoundError:
     print("Error: File 'Loan_default.csv' not found. Please ensure the file exists in the same directory as your script.")
     exit()
 
 # Separate features and target variable
-features = data.drop(["Default", "LoanID"], axis=1)  
+features = data.drop(["Default", "LoanID"], axis=1)
 target = data["Default"]
 
 # Define categorical features explicitly (CatBoost requires this)
@@ -46,7 +45,7 @@ class_imbalance_ratio = class_counts.iloc[1] / class_counts.iloc[0]  # Ratio of 
 print(f"Class imbalance ratio: {class_imbalance_ratio:.2f}")
 
 # Oversampling (recommended for this case)
-smote = SMOTENC(categorical_features, random_state=42)
+smote = SMOTENC(categorical_features=cat_features_indices, random_state=42)
 X_train, y_train = smote.fit_resample(features, target)
 
 # Split data into training and validation sets
@@ -68,7 +67,6 @@ params = {
 try:
     start_train_time = time.time()
     model = CatBoostClassifier(**params)
-    print('after model initialisation')
     model.fit(X_train, y_train, eval_set=[(X_val, y_val)], early_stopping_rounds=10)
     end_train_time = time.time()
     training_time = end_train_time - start_train_time
@@ -114,5 +112,23 @@ try:
     plt.show()
 except Exception as e:
     print(f"Error during AUC-ROC curve plotting: {e}")
+
+# Save metrics and parameters to Excel file
+try:
+    results = pd.DataFrame({
+        'Model': ['CatBoostClassifier'],
+        'Accuracy': [accuracy],
+        'F1 Score': [f1],
+        'AUC': [auc],
+        'Training Time (s)': [training_time],
+        'Testing Time (s)': [testing_time]
+    })
+
+    with pd.ExcelWriter('CatBoostClassifier.xlsx', mode='w') as writer:
+        results.to_excel(writer, sheet_name='Metrics', index=False)
+        pd.DataFrame({'FPR': fpr, 'TPR': tpr}).to_excel(writer, sheet_name='ROC', index=False)
+
+except Exception as e:
+    print(f"Error during data saving: {e}")
 
 print("Model training and evaluation complete!")

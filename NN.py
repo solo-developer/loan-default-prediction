@@ -115,4 +115,22 @@ plt.title('Receiver Operating Characteristic (ROC) Curve')
 plt.legend(loc="lower right")
 plt.show()
 
+# Save metrics and parameters to Excel file
+try:
+    results = pd.DataFrame({
+        'Model': ['NeuralNetwork'],
+        'Accuracy': [accuracy],
+        'F1 Score': [f1],
+        'AUC': [auc],
+        'Training Time (s)': [training_time],
+        'Testing Time (s)': [prediction_time]
+    })
+
+    with pd.ExcelWriter('NeuralNetwork.xlsx', mode='w') as writer:
+        results.to_excel(writer, sheet_name='Metrics', index=False)
+        pd.DataFrame({'FPR': fpr, 'TPR': tpr}).to_excel(writer, sheet_name='ROC', index=False)
+
+except Exception as e:
+    print(f"Error during data saving: {e}")
+
 print("Model training and evaluation complete!")

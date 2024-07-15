@@ -9,13 +9,12 @@ import matplotlib.pyplot as plt
 try:
     # Load data from CSV file (replace with your file path)
     data = pd.read_csv("Loan_default.csv")
-
 except FileNotFoundError:
     print("Error: File 'Loan_default.csv' not found. Please ensure the file exists in the same directory as your script.")
     exit()
 
 # Separate features and target variable
-features = data.drop(["Default", "LoanID"], axis=1)  # Avoid potentially unnecessary column "LoanID"
+features = data.drop(["Default", "LoanID"], axis=1)
 target = data["Default"]
 
 # Handle categorical features (if any)
@@ -56,8 +55,6 @@ params = {
     "categorical_feature": categorical_features,
     "early_stopping_rounds": 10,
     "random_seed": 42,
-    # **Optional: Class weights for cost-sensitive learning**
-    # "class_weight": {0: 1, 1: class_imbalance_ratio}  # Replace 0 with majority class index
 }
 
 # Train the LightGBM model with early stopping
@@ -109,5 +106,23 @@ try:
     plt.show()
 except Exception as e:
     print(f"Error during AUC-ROC curve plotting: {e}")
+
+# Save metrics and parameters to Excel file
+try:
+    results = pd.DataFrame({
+        'Model': ['LGBMClassifier'],
+        'Accuracy': [accuracy],
+        'F1 Score': [f1],
+        'AUC': [auc],
+        'Training Time (s)': [training_time],
+        'Testing Time (s)': [testing_time]
+    })
+
+    with pd.ExcelWriter('LGBMClassifier.xlsx', mode='w') as writer:
+        results.to_excel(writer, sheet_name='Metrics', index=False)
+        pd.DataFrame({'FPR': fpr, 'TPR': tpr}).to_excel(writer, sheet_name='ROC', index=False)
+
+except Exception as e:
+    print(f"Error during data saving: {e}")
 
 print("Model training and evaluation complete!")

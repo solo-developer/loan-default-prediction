@@ -70,7 +70,7 @@ for train_index, val_index in skf.split(features, target):
     # Train CatBoost model
     catboost_params = {
         "objective": "Logloss",
-        "eval_metric": "AUC",
+        "eval_metric": "F1",
         "learning_rate": 0.1,
         "iterations": 1000,
         "random_seed": 42,
@@ -115,7 +115,7 @@ xgb_params = {
     "objective": "binary:logistic",
     "eval_metric": "auc",
     "learning_rate": 0.1,
-    "max_depth": 3,
+    "max_depth": 10,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "random_state": 42,
@@ -150,9 +150,29 @@ print(f"Accuracy: {meta_accuracy:.4f}")
 print(f"F1 Score: {meta_f1:.4f}")
 print(f"AUC-ROC: {meta_auc:.4f}")
 
+# Calculate ROC curve data
+fpr, tpr, _ = roc_curve(y_holdout, meta_preds)
+
+# Save metrics and parameters to Excel file
+try:
+    results = pd.DataFrame({
+        'Model': ['Stacking Ensemble'],
+        'Accuracy': [meta_accuracy],
+        'F1 Score': [meta_f1],
+        'AUC': [meta_auc],
+        'Training Time (s)': [training_time],
+        'Testing Time (s)': [prediction_time]
+    })
+
+    with pd.ExcelWriter('StackingEnsemble.xlsx', mode='w') as writer:
+        results.to_excel(writer, sheet_name='Metrics', index=False)
+        pd.DataFrame({'FPR': fpr, 'TPR': tpr}).to_excel(writer, sheet_name='ROC', index=False)
+
+except Exception as e:
+    print(f"Error during data saving: {e}")
+
 # Plot AUC-ROC curve
 try:
-    fpr, tpr, _ = roc_curve(y_holdout, meta_preds)
     plt.figure()
     plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.4f)' % meta_auc)
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')

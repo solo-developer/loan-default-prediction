@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 
 # Load your data
@@ -23,6 +24,18 @@ correlations = features.apply(lambda x: x.corr(target))
 # Sort correlations in descending order
 correlations = correlations.sort_values(ascending=False)
 
-# Print correlations
-print("Correlation with Target Variable:")
-print(correlations)
+# Plot correlations (horizontal bar chart)
+plt.figure(figsize=(10, 6))
+bars = plt.barh(correlations.index, correlations.values, color='skyblue')
+plt.xlabel('Correlation with Target Variable')
+plt.ylabel('Feature')
+plt.title('Correlation of Features with Target Variable')
+plt.grid(axis='x', linestyle='--', alpha=0.7)
+
+# Add correlation values as labels on the bars
+for bar in bars:
+    plt.text(bar.get_width(), bar.get_y() + bar.get_height()/2, f'{bar.get_width():.2f}',
+             va='center', ha='left', color='black', fontsize=10)
+
+plt.tight_layout()
+plt.show()

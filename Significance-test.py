@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.stats import chi2_contingency
 
 # Load your dataset (replace with your actual data loading code)
@@ -29,10 +30,25 @@ for var in categorical_variables:
     chi2, p, dof, expected = chi2_contingency(contingency_table)
     chi2_results.append((var, chi2, p))
 
-# Sort variables by p-value (smaller p-value indicates more significant association)
-chi2_results.sort(key=lambda x: x[2])
+# Sort variables by chi-square statistic (higher chi-square indicates more significant association)
+chi2_results.sort(key=lambda x: x[1], reverse=True)
 
-# Print variables in descending order of significance (lower p-value is more significant)
-print("Variables and their Chi-square test results (in descending order of significance):")
-for var, chi2, p in chi2_results:
-    print(f"{var}: Chi-square = {chi2:.4f}, p-value = {p:.4f}")
+# Create a DataFrame from the results
+chi2_df = pd.DataFrame(chi2_results, columns=['Variable', 'Chi-Squared', 'p-Value'])
+
+# Plot the bar chart
+plt.figure(figsize=(10, 6))
+bars = plt.bar(chi2_df['Variable'], chi2_df['Chi-Squared'], color='skyblue')
+plt.ylabel('Chi-Squared Statistic')
+plt.xlabel('Categorical Variable')
+plt.title('Chi-Squared Test Results for Categorical Variables')
+plt.xticks(rotation=45)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+# Add chi-squared values as labels on the bars
+for bar in bars:
+    plt.text(bar.get_x() + bar.get_width()/2, bar.get_height(), f'{bar.get_height():.2f}',
+             va='bottom', ha='center', color='black', fontsize=10)
+
+plt.tight_layout()
+plt.show()

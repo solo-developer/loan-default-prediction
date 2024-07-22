@@ -30,6 +30,9 @@
 ## ROC-AUC Comparison
 ![ROC-AUC Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/ROC-AUC-Comparison.png)
 
+## Feature Importance Visualization
+![Feature Importance Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/feature-importance.png)
+
 ## Significance of Categorical features (Chi-Squared test)
 ![Chi-Squared test Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/chi-squared.png)
 

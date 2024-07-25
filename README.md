@@ -37,6 +37,9 @@
 ## Significance of Categorical features (Chi-Squared test)
 ![Chi-Squared test Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/chi-squared.png)
 
+## Matrix Visualization of Categorical features (Cramer's V)
+![Matrix Visualization of Categorical features](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Cramers%20V%20visualuzation.png)
+
 ## Significance of Numerical features (Correlation test)
 ![Correlation test Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/correlation.png)
 

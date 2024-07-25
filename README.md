@@ -77,3 +77,9 @@
 ![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-ensemble-training%20time%20comparison.png)
 ![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-ensemble-testing-time-comparison.png)
 
+## Results after feature reduction (LightGBM)
+
+![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-LightGBM.png)
+
+![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-recution-lightGBM-training%20time-comparison.png)
+![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-lightGBM-testing-time%20comparison.png)

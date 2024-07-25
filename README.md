@@ -70,16 +70,9 @@
 - The correlations between other variables, such as Age and LoanAmount, Income and LoanAmount, InterestRate and Income, and LoanAmount and CreditScore, are generally very slight.
 
 
-## Results after feature reduction (LoanPurpose)
+## Results after feature reduction (Stacking Ensemble)
 
-| Algorithms     | Accuracy        | F1 Score  | AUC     |
-| -------------  |:-------------:  | -----:    | ----:   |
-| LightGBM       | 0.8798          | 0.8714    | 0.8798  |
-| CatBoost       | 0.9317          | 0.9274    | 0.9317  |
-| ExtraTrees     | 0.8279          | 0.8201    | 0.8261  |
-| Decision Trees | 0.6881          | 0.6986    | 0.6881  |
-| Random Forest  | 0.7345          | 0.7427    | 0.7345  |
-| ANN            | 0.6901          | 0.6062    | 0.6918  |
+![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-stacking%20ensemble.png)
 
 ## Results after feature reduction (LoanPurpose,HasMortgage)
 

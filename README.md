@@ -12,17 +12,18 @@
   * ANN
 ## Results
 
-| Algorithms     | Accuracy        | F1 Score  | AUC     |
-| -------------  |:-------------:  | -----:    | ----:   |
-| LightGBM       | 0.8809          | 0.8728    | 0.8809  |
-| XGBoost        | 0.8985          | 0.8914    | 0.8985  |
-| CatBoost       | 0.9319          | 0.9276    | 0.9319  |
-| ExtraTrees     | 0.8261          | 0.8280    | 0.8261  |
-| Decision Trees | 0.6882          | 0.6986    | 0.6882  |
-| Random Forest  | 0.7354          | 0.7433    | 0.7354  |
-| ANN            | 0.7002          | 0.6868    | 0.7727  |
-| Neural Network | 0.7061          | 0.7421    | 0.7369  |
-| Stacking Ens.  | 0.9468          | 0.9451    | 0.9512  |
+| Algorithms     | Accuracy        | F1 Score  |
+| -------------  |:-------------:  | -----:    |
+| Stacking Ens.  | 0.9468          | 0.9451    |
+| CatBoost       | 0.9319          | 0.9276    |
+| XGBoost        | 0.8985          | 0.8914    |
+| LightGBM       | 0.8809          | 0.8728    |
+| ExtraTrees     | 0.8261          | 0.8280    |
+| Neural Network | 0.7061          | 0.7421    |
+| Random Forest  | 0.7354          | 0.7433    |
+| Decision Trees | 0.6882          | 0.6986    |
+| ANN            | 0.7002          | 0.6868    |
+
 
 ## F1-Score Bar Graph Visualization
 ![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/main/images/bargraph-f1.png)

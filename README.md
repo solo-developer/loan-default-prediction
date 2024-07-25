@@ -21,12 +21,12 @@
 | ExtraTrees     | 0.8261          | 0.8280    |
 | Neural Network | 0.7061          | 0.7421    |
 | Random Forest  | 0.7354          | 0.7433    |
-| Decision Trees | 0.6882          | 0.6986    |
+| Decision Trees | 0.6882          | 0.7138    |
 | ANN            | 0.7002          | 0.6868    |
 
 
 ## F1-Score Bar Graph Visualization
-![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/main/images/bargraph-f1.png)
+![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/bargraph-f1.png)
 
 ## ROC-AUC Comparison
 ![ROC-AUC Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/ROC-AUC-Comparison.png)
@@ -80,3 +80,10 @@
 
 ![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-recution-lightGBM-training%20time-comparison.png)
 ![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-lightGBM-testing-time%20comparison.png)
+
+## Results after feature reduction (Decision Trees)
+
+![Results after feature reduction (Decision Trees)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-LightGBM.png)
+
+![Results after feature reduction (Decision Trees)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/feature-reduction-decision-tree-training-time-comparison.png)
+![Results after feature reduction (Decision Trees)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-decision-tree-testing-time-comparison.png)

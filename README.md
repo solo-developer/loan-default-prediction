@@ -72,7 +72,7 @@
 ![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-stacking%20ensemble.png)
 
 ![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-ensemble-training%20time%20comparison.png)
-![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-ensemble-testing-time-comparison.png)
+
 
 ## Results after corruption of defaulted records
 

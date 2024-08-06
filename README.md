@@ -74,16 +74,6 @@
 ![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-ensemble-training%20time%20comparison.png)
 ![Results after feature reduction (Stacking Ensemble)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature%20reduction-ensemble-testing-time-comparison.png)
 
-## Results after feature reduction (LightGBM)
+## Results after corruption of defaulted records
 
-![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-LightGBM.png)
-
-![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-recution-lightGBM-training%20time-comparison.png)
-![Results after feature reduction (Light GBM)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-lightGBM-testing-time%20comparison.png)
-
-## Results after feature reduction (Decision Trees)
-
-![Results after feature reduction (Decision Trees)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-LightGBM.png)
-
-![Results after feature reduction (Decision Trees)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/feature-reduction-decision-tree-training-time-comparison.png)
-![Results after feature reduction (Decision Trees)](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Feature-reduction-decision-tree-testing-time-comparison.png)
+![Results after corruption of data](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Result%20after%20corruption%20of%20data.png)

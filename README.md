@@ -12,17 +12,17 @@
   * ANN
 ## Results
 
-| Algorithms     | Accuracy        | F1 Score  |
-| -------------  |:-------------:  | -----:    |
-| Stacking Ens.  | 0.9468          | 0.9451    |
-| CatBoost       | 0.9319          | 0.9276    |
-| XGBoost        | 0.8985          | 0.8914    |
-| LightGBM       | 0.8809          | 0.8728    |
-| ExtraTrees     | 0.8261          | 0.8280    |
-| Neural Network | 0.7061          | 0.7421    |
-| Random Forest  | 0.7354          | 0.7433    |
-| Decision Trees | 0.6882          | 0.7138    |
-| ANN            | 0.7002          | 0.6868    |
+| Algorithms     | F1 Score | Precision | Recall |
+| -------------- |:--------:|:---------:|:------:|
+| Stacking Ens.  | 0.9451   | 0.9782    | 0.9142 |
+| LSTM           | 0.9310   | 0.9888    | 0.8796 |
+| ANN            | 0.9291   | 0.9998    | 0.8676 |
+| CatBoost       | 0.9276   | 0.9903    | 0.8724 |
+| XGBoost        | 0.8914   | 0.9585    | 0.8330 |
+| LightGBM       | 0.8728   | 0.9365    | 0.8172 |
+| ExtraTrees     | 0.8280   | 0.8191    | 0.8371 |
+| Random Forest  | 0.7601   | 0.7452    | 0.7755 |
+| Decision Trees | 0.7138   | 0.7800    | 0.6580 |
 
 
 ## F1-Score Bar Graph Visualization

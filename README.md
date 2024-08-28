@@ -76,4 +76,4 @@
 
 ## Results after corruption of defaulted records
 
-![Results after corruption of data](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Result%20after%20corruption%20of%20data.png)
+![Results after corruption of data](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/Robustness%20test.png)

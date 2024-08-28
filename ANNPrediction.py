@@ -1,154 +1,125 @@
 import pandas as pd
-import numpy as np
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTENC
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from imblearn.over_sampling import SMOTE
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras import backend as K
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, roc_curve
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import roc_auc_score, f1_score, roc_curve, auc, precision_score, recall_score
 import matplotlib.pyplot as plt
-import time
+import keras_tuner as kt
 
-def f1_m(y_true, y_pred):
-    y_true = K.cast(y_true, dtype=K.floatx())
-    y_pred = K.cast(y_pred, dtype=K.floatx())
-    
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    
-    precision = true_positives / (predicted_positives + K.epsilon())
-    recall = true_positives / (possible_positives + K.epsilon())
-    
-    f1 = 2 * (precision * recall) / (precision + recall + K.epsilon())
-    return f1
+# Load the dataset
+file_path = 'processed_dataset1.csv'
+data = pd.read_csv(file_path)
 
-try:
-    # Load data from CSV file (replace with your file path)
-    data = pd.read_csv("Loan_default.csv")
-except FileNotFoundError:
-    print("Error: File 'Loan_default.csv' not found. Please ensure the file exists in the same directory as your script.")
-    exit()
+data['Default'] = data['Default'].map({'Default': 0, 'Non-Default': 1})
 
 # Separate features and target variable
-features = data.drop(["Default", "LoanID"], axis=1)
-target = data["Default"]
+X = data.drop('Default', axis=1)
+y = data['Default']
 
-# Define categorical features explicitly
-categorical_features = [
-    "Education",
-    "EmploymentType",
-    "MaritalStatus",
-    "HasMortgage",
-    "HasDependents",
-    "LoanPurpose",
-    "HasCoSigner",
-]
+# Balance the dataset
+smote = SMOTE(sampling_strategy='auto', random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X, y)
 
-# Get the indices of the existing categorical features
-cat_features_indices = [data.columns.get_loc(col) - 1 for col in categorical_features if col in data.columns]
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.2, stratify=y_resampled, random_state=42)
 
-# Calculate class imbalance ratio
-class_counts = target.value_counts()
-class_imbalance_ratio = class_counts.iloc[1] / class_counts.iloc[0]
-print(f"Class imbalance ratio: {class_imbalance_ratio:.2f}")
+# Standardize numerical features
+numerical_features = X.select_dtypes(include=['number']).columns
+scaler = StandardScaler()
+X_train[numerical_features] = scaler.fit_transform(X_train[numerical_features])
+X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 
-# Oversampling (recommended for this case)
-smote = SMOTENC(categorical_features=cat_features_indices, random_state=42)
-X_train, y_train = smote.fit_resample(features, target)
+# Define the model-building function for KerasTuner
+def build_model(hp):
+    model = Sequential()
+    # Input layer
+    model.add(Dense(units=hp.Int('units_1', min_value=32, max_value=512, step=32), activation='relu', input_shape=(X_train.shape[1],)))
+    model.add(Dropout(rate=hp.Float('dropout_1', min_value=0.1, max_value=0.5, step=0.1)))
+    
+    # Hidden layers
+    for i in range(hp.Int('num_layers', 1, 3)):
+        model.add(Dense(units=hp.Int(f'units_{i+2}', min_value=32, max_value=512, step=32), activation='relu'))
+        model.add(Dropout(rate=hp.Float(f'dropout_{i+2}', min_value=0.1, max_value=0.5, step=0.1)))
+    
+    # Output layer
+    model.add(Dense(1, activation='sigmoid'))
 
-# Split data into training and validation sets
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+    model.compile(optimizer=Adam(learning_rate=hp.Float('learning_rate', min_value=1e-4, max_value=1e-2, sampling='log')), 
+                  loss='binary_crossentropy', 
+                  metrics=['accuracy'])
+    return model
 
-# Preprocessing (One-Hot Encoding)
-categorical_transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
-numerical_transformer = 'passthrough'  # Pass numerical features through without transformation
-transformer = ColumnTransformer(transformers=[
-    ('cat', categorical_transformer, categorical_features),
-    ('num', numerical_transformer, [col for col in X_train.columns if col not in categorical_features])
-])
+# Initialize the tuner
+tuner = kt.RandomSearch(
+    build_model,
+    objective='val_accuracy',
+    max_trials=10,
+    executions_per_trial=1,
+    directory='my_dir',
+    project_name='ann_tuning'
+)
 
-X_train_encoded = transformer.fit_transform(X_train)
-X_val_encoded = transformer.transform(X_val)
+# Perform the hyperparameter search
+tuner.search(X_train, y_train, epochs=5, validation_data=(X_test, y_test), batch_size=32)
 
-# Define ANN model (simple example)
-model = Sequential()
-model.add(Dense(units=32, activation='relu', input_shape=(X_train_encoded.shape[1],)))  # Hidden layer with 32 neurons and ReLU activation
-model.add(Dense(units=1, activation='sigmoid'))  # Output layer with 1 neuron and sigmoid activation for binary classification
+# Get the optimal hyperparameters
+best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
-# Compile the model with custom F1 score metric
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[f1_m])
+# Print the best hyperparameters
+print(f"""
+The optimal number of units in the first hidden layer is {best_hps.get('units_1')}.
+The optimal dropout rate for the first hidden layer is {best_hps.get('dropout_1')}.
+""")
+for i in range(best_hps.get('num_layers')):
+    print(f"The optimal number of units in hidden layer {i+2} is {best_hps.get(f'units_{i+2}')}.")
+    print(f"The optimal dropout rate for hidden layer {i+2} is {best_hps.get(f'dropout_{i+2}')}.")
 
-# Measure training time
-start_time = time.time()
+print(f"The optimal learning rate is {best_hps.get('learning_rate')}.")
 
-# Train the model
-try:
-    model.fit(X_train_encoded, y_train, epochs=15, batch_size=32)  # Adjust epochs and batch_size as needed
-except Exception as e:
-    print(f"Error during model training: {e}")
+# Build the model with the optimal hyperparameters and train it
+model = tuner.hypermodel.build(best_hps)
+history = model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
 
-training_time = time.time() - start_time
+# Predictions
+y_pred_prob = model.predict(X_test)
+y_pred = (y_pred_prob > 0.5).astype(int)
 
-# Measure prediction time
-start_time = time.time()
+# Calculate metrics
+roc_auc = roc_auc_score(y_test, y_pred_prob)
+f1 = f1_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
 
-# Make predictions on the validation set
-try:
-    predictions = model.predict(X_val_encoded).ravel()
-    binary_predictions = (predictions > 0.4).astype(int)  # Apply threshold to get binary predictions
-except Exception as e:
-    print(f"Error during prediction: {e}")
+# Plot ROC curve
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
+roc_auc = auc(fpr, tpr)
 
-prediction_time = time.time() - start_time
+plt.figure()
+plt.plot(fpr, tpr, color='blue', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='red', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic')
+plt.legend(loc="lower right")
+plt.show()
 
-# Evaluate model performance using F1 Score
-try:
-    accuracy = accuracy_score(y_val, binary_predictions)
-    f1 = f1_score(y_val, binary_predictions)
-    auc = roc_auc_score(y_val, predictions)
-    print(f"Training time: {training_time:.2f} seconds")
-    print(f"Prediction time: {prediction_time:.2f} seconds")
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"F1 Score: {f1:.4f}")
-    print(f"AUC: {auc:.4f}")
-except Exception as e:
-    print(f"Error during evaluation: {e}")
+# Print metrics
+print(f"ROC AUC Score: {roc_auc}")
+print(f"F1 Score: {f1}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
 
-# Plot AUC-ROC curve
-try:
-    fpr, tpr, _ = roc_curve(y_val, predictions)
-    plt.figure()
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.4f)' % auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (ROC) Curve')
-    plt.legend(loc="lower right")
-    plt.show()
-except Exception as e:
-    print(f"Error during AUC-ROC curve plotting: {e}")
-
-# Save metrics and parameters to Excel file
-try:
-    results = pd.DataFrame({
-        'Model': ['NeuralNetwork'],
-        'Accuracy': [accuracy],
-        'F1 Score': [f1],
-        'AUC': [auc],
-        'Training Time (s)': [training_time],
-        'Testing Time (s)': [prediction_time]
-    })
-
-    with pd.ExcelWriter('NeuralNetwork.xlsx', mode='w') as writer:
-        results.to_excel(writer, sheet_name='Metrics', index=False)
-        pd.DataFrame({'FPR': fpr, 'TPR': tpr}).to_excel(writer, sheet_name='ROC', index=False)
-
-except Exception as e:
-    print(f"Error during data saving: {e}")
-
-print("Model training and evaluation complete!")
+# Save metrics to file
+output_file = 'ANN_Results.txt'
+with open(output_file, 'w') as file:
+    file.write(f"ROC AUC Score: {roc_auc}\n")
+    file.write(f"F1 Score: {f1}\n")
+    file.write(f"Precision: {precision}\n")
+    file.write(f"Recall: {recall}\n")

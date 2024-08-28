@@ -1,126 +1,121 @@
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTENC
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, roc_curve
-import matplotlib.pyplot as plt
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Dropout
-from tensorflow.keras.callbacks import EarlyStopping
 import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from imblearn.over_sampling import SMOTE
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import roc_auc_score, f1_score, roc_curve, auc, precision_score, recall_score
+import matplotlib.pyplot as plt
+import keras_tuner as kt
 
-# Load data from CSV file (replace with your file path)
-try:
-    data = pd.read_csv("Loan_default.csv")
-except FileNotFoundError:
-    print("Error: File 'Loan_default.csv' not found. Please ensure the file exists in the same directory as your script.")
-    exit()
+# Load the dataset
+file_path = 'processed_dataset1.csv'
+data = pd.read_csv(file_path)
+
+data['Default'] = data['Default'].map({'Default': 0, 'Non-Default': 1})
 
 # Separate features and target variable
-features = data.drop(["Default", "LoanID"], axis=1)
-target = data["Default"]
+X = data.drop('Default', axis=1)
+y = data['Default']
 
-# Define categorical features explicitly
-categorical_features = [
-    "Education",
-    "EmploymentType",
-    "MaritalStatus",
-    "HasMortgage",
-    "HasDependents",
-    "LoanPurpose",
-    "HasCoSigner"
-]
+# Balance the dataset
+smote = SMOTE(sampling_strategy='auto', random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X, y)
 
-# Encode categorical features
-label_encoders = {}
-for col in categorical_features:
-    le = LabelEncoder()
-    features[col] = le.fit_transform(features[col])
-    label_encoders[col] = le
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.2, stratify=y_resampled, random_state=42)
 
-# Normalize the features
+# Standardize numerical features
+numerical_features = X.select_dtypes(include=['number']).columns
 scaler = StandardScaler()
-features_scaled = scaler.fit_transform(features)
+X_train[numerical_features] = scaler.fit_transform(X_train[numerical_features])
+X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 
+# Reshape for LSTM
+X_train_reshaped = X_train.values.reshape((X_train.shape[0], X_train.shape[1], 1))
+X_test_reshaped = X_test.values.reshape((X_test.shape[0], X_test.shape[1], 1))
 
-# Oversampling using SMOTENC
-smote = SMOTENC(categorical_features=[features.columns.get_loc(col) for col in categorical_features], random_state=42)
-X_resampled, y_resampled = smote.fit_resample(features_scaled, target)
+# Define the model-building function for KerasTuner
+def build_model(hp):
+    model = Sequential()
+    model.add(LSTM(units=hp.Int('units_1', min_value=32, max_value=128, step=16), return_sequences=True, input_shape=(X_train.shape[1], 1)))
+    model.add(Dropout(rate=hp.Float('dropout_1', min_value=0.1, max_value=0.5, step=0.1)))
+    model.add(LSTM(units=hp.Int('units_2', min_value=32, max_value=128, step=16)))
+    model.add(Dropout(rate=hp.Float('dropout_2', min_value=0.1, max_value=0.5, step=0.1)))
+    model.add(Dense(1, activation='sigmoid'))
 
-# Split data into training and validation sets
-X_train, X_val, y_train, y_val = train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42)
+    model.compile(optimizer=Adam(learning_rate=hp.Float('learning_rate', min_value=1e-4, max_value=1e-2, sampling='log')), 
+                  loss='binary_crossentropy', 
+                  metrics=['accuracy'])
+    return model
 
-# Reshape input for RNN (samples, timesteps, features)
-X_train = np.expand_dims(X_train, axis=1)
-X_val = np.expand_dims(X_val, axis=1)
+# Initialize the tuner
+tuner = kt.RandomSearch(
+    build_model,
+    objective='val_accuracy',
+    max_trials=5,
+    executions_per_trial=1,
+    directory='my_dir',
+    project_name='lstm_tuning'
+)
 
-# Build RNN model
-model = Sequential()
-model.add(LSTM(50, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True))
-model.add(Dropout(0.2))
-model.add(LSTM(50, return_sequences=False))
-model.add(Dropout(0.2))
-model.add(Dense(1, activation='sigmoid'))
+# Perform the hyperparameter search
+tuner.search(X_train_reshaped, y_train, epochs=5, validation_data=(X_test_reshaped, y_test), batch_size=32)
 
-# Compile the model with 'AUC' and 'accuracy' metrics
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['AUC', 'accuracy'])
+# Get the optimal hyperparameters
+best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
-# Define early stopping callback
-early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+# Print the best hyperparameters
+print(f"""
+The optimal number of units in the first LSTM layer is {best_hps.get('units_1')}.
+The optimal number of units in the second LSTM layer is {best_hps.get('units_2')}.
+The optimal dropout rate for the first LSTM layer is {best_hps.get('dropout_1')}.
+The optimal dropout rate for the second LSTM layer is {best_hps.get('dropout_2')}.
+The optimal learning rate is {best_hps.get('learning_rate')}.
+""")
 
-# Train the model
-history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_val, y_val), callbacks=[early_stopping])
+# Build the model with the optimal hyperparameters and train it
+model = tuner.hypermodel.build(best_hps)
+history = model.fit(X_train_reshaped, y_train, epochs=15, batch_size=32, validation_data=(X_test_reshaped, y_test))
 
-# Evaluate the model on the validation set
-val_loss, val_auc, val_accuracy = model.evaluate(X_val, y_val, verbose=0)
+# Predictions
+y_pred_prob = model.predict(X_test_reshaped)
+y_pred = (y_pred_prob > 0.5).astype(int)
 
-# Make predictions
-y_pred_proba = model.predict(X_val)
-y_pred = (y_pred_proba > 0.5).astype("int32")
+# Calculate metrics
+roc_auc = roc_auc_score(y_test, y_pred_prob)
+f1 = f1_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
 
-# Calculate additional metrics
-val_f1 = f1_score(y_val, y_pred)
+# Plot ROC curve
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
+roc_auc = auc(fpr, tpr)
 
-# Print and record results in Excel
-print(f"Validation Accuracy: {val_accuracy:.4f}")
-print(f"Validation F1 Score: {val_f1:.4f}")
-print(f"Validation AUC: {val_auc:.4f}")
-
-# Record results in Excel
-results = {
-    "Validation Accuracy": [val_accuracy],
-    "Validation F1 Score": [val_f1],
-    "Validation AUC": [val_auc]
-}
-
-# Convert results to DataFrame
-results_df = pd.DataFrame(results)
-
-# Define the excel file name
-excel_file = "LSTM_Model_Results.xlsx"
-
-# Check if file exists
-if not os.path.exists(excel_file):
-    # Create a new workbook and add the results
-    with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-        results_df.to_excel(writer, sheet_name='LSTM', index=False)
-else:
-    # Append the results to the existing file
-    with pd.ExcelWriter(excel_file, engine='openpyxl', mode='a') as writer:
-        results_df.to_excel(writer, sheet_name='LSTM', index=False)
-
-# Plot AUC-ROC curve
-fpr, tpr, _ = roc_curve(y_val, y_pred_proba)
 plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.4f)' % val_auc)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.plot(fpr, tpr, color='blue', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='red', lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.title('Receiver Operating Characteristic')
 plt.legend(loc="lower right")
 plt.show()
 
-print("Model training, evaluation, and recording complete!")
+# Print metrics
+print(f"ROC AUC Score: {roc_auc}")
+print(f"F1 Score: {f1}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+
+# Save metrics to file
+output_file = 'LSTM_Results.txt'
+with open(output_file, 'w') as file:
+    file.write(f"ROC AUC Score: {roc_auc}\n")
+    file.write(f"F1 Score: {f1}\n")
+    file.write(f"Precision: {precision}\n")
+    file.write(f"Recall: {recall}\n")

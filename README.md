@@ -26,7 +26,7 @@
 
 
 ## F1-Score Bar Graph Visualization
-![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/bargraph-f1.png)
+![Bar graph Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/F1-score%20comparison.png)
 
 ## ROC-AUC Comparison
 ![ROC-AUC Visualization](https://github.com/solo-developer/loan-default-prediction/blob/develop/images/AUC-ROC%20Comparison.png)
